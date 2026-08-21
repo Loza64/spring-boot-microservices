@@ -11,11 +11,11 @@ import jakarta.persistence.criteria.Predicate;
 
 public class RoleSpecifications {
 
-  public static Specification<Role> search(String search, Boolean showDeleted) {
+  public static Specification<Role> search(String search, Boolean deleted) {
     return (root, cq, cb) -> {
       List<Predicate> predicates = new ArrayList<>();
 
-      if (showDeleted != null && showDeleted) {
+      if (deleted != null && deleted) {
         predicates.add(cb.isNotNull(root.get("deletedAt")));
       } else {
         predicates.add(cb.isNull(root.get("deletedAt")));

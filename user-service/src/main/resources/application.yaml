@@ -30,3 +30,8 @@ eureka:
 
 jwt:
   secret: ${JWT_SECRET}
+  issuer: auth-service
+  access-token-expiration-minutes: 30
+
+internal:
+  api-key: ${INTERNAL_API_KEY}

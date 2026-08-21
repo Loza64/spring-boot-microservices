@@ -6,13 +6,15 @@ import java.util.List;
 
 import javax.crypto.SecretKey;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.app.user_service.config.JwtProperties;
+import com.app.user_service.domain.dto.TokenClaims;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -24,18 +26,29 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private final SecretKey key;
+  private final JwtProperties jwtProperties;
 
-  public JwtAuthenticationFilter(@Value("${jwt.secret}") String secret) {
-    this.key = Keys.hmacShaKeyFor(secret.getBytes());
+  private SecretKey key() {
+    return Keys.hmacShaKeyFor(jwtProperties.secret().getBytes());
+  }
+
+  @SuppressWarnings("unchecked")
+  private TokenClaims toTokenClaims(Claims claims) {
+    return new TokenClaims(
+            claims.getSubject(),
+            claims.get("userId", Long.class),
+            claims.get("role", String.class),
+            (List<String>) claims.get("permissions", List.class));
   }
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-      FilterChain filterChain) throws ServletException, IOException {
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
     String header = request.getHeader("Authorization");
 
@@ -43,25 +56,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
       String token = header.substring(7);
 
       try {
-        Claims claims = Jwts.parser()
-            .verifyWith(key)
-            .build()
-            .parseSignedClaims(token)
-            .getPayload();
+        Claims rawClaims = Jwts.parser()
+                .verifyWith(key())
+                .requireIssuer(jwtProperties.issuer())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
 
-        String username = claims.getSubject();
-        String role = claims.get("role", String.class);
-        List<String> permissions = claims.get("permissions", List.class);
+        TokenClaims claims = toTokenClaims(rawClaims);
 
         List<GrantedAuthority> authorities = new ArrayList<>();
-        if (role != null) {
-          authorities.add(new SimpleGrantedAuthority("ROLE_" + role));
+        if (claims.role() != null) {
+          authorities.add(new SimpleGrantedAuthority("ROLE_" + claims.role()));
         }
-        if (permissions != null) {
-          permissions.forEach(p -> authorities.add(new SimpleGrantedAuthority(p)));
+        if (claims.permissions() != null) {
+          claims.permissions().forEach(p -> authorities.add(new SimpleGrantedAuthority(p)));
         }
 
-        var authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
+        var authentication = new UsernamePasswordAuthenticationToken(claims.username(), null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
       } catch (JwtException | IllegalArgumentException e) {

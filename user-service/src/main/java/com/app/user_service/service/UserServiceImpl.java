@@ -2,6 +2,13 @@ package com.app.user_service.service;
 
 import java.time.LocalDateTime;
 
+import com.app.user_service.common.exceptions.BadRequestException;
+import com.app.user_service.domain.dto.user.*;
+import com.app.user_service.domain.dto.user.auth.AuthResponseDto;
+import com.app.user_service.domain.dto.user.auth.ChangePasswordDto;
+import com.app.user_service.domain.dto.user.auth.UserProfileUpdateDto;
+import com.app.user_service.domain.dto.user.auth.UserRegisterDto;
+import com.app.user_service.domain.model.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,9 +19,6 @@ import com.app.user_service.common.exceptions.ConfictException;
 import com.app.user_service.common.exceptions.NotFoundException;
 import com.app.user_service.common.pagination.PaginationMapper;
 import com.app.user_service.common.pagination.PaginationResponse;
-import com.app.user_service.domain.dto.user.UserCreateDto;
-import com.app.user_service.domain.dto.user.UserResponseDto;
-import com.app.user_service.domain.dto.user.UserUpdateDto;
 import com.app.user_service.domain.mapper.UserMapper;
 import com.app.user_service.domain.model.User;
 import com.app.user_service.repository.RoleRepository;
@@ -122,5 +126,67 @@ public class UserServiceImpl implements IBaseService<Long, UserCreateDto, UserUp
   public PaginationResponse<UserResponseDto> findAll(String search, Long roleId, Boolean deleted, Pageable pageable) {
     Page<User> page = repository.findAll(UserSpecifications.search(search, roleId, deleted), pageable);
     return paginationMapper.toPaginationResponse(page.map(userMapper::toListResponseDto));
+  }
+
+  //Auth functions
+  @Transactional(readOnly = true)
+  public AuthResponseDto findByUsernameForAuth(String username) {
+    User user = repository.findByUsername(username).orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+    return userMapper.toAuthResponseDto(user);
+  }
+
+  @Transactional
+  public AuthResponseDto registerPublicUser(UserRegisterDto dto) {
+    if (repository.existsByEmail(dto.email())) {
+      throw new ConfictException("El email ya está registrado");
+    }
+    if (repository.existsByUsername(dto.username())) {
+      throw new ConfictException("El username ya está en uso");
+    }
+
+    Role clientRole = roleRepository.findByName(RoleNames.CLIENT).orElseThrow(() -> new IllegalStateException("El rol CLIENT no existe. Verifica el seed."));
+
+    User user = userMapper.toRegisterUser(dto);
+    user.setPassword(encoder.encode(dto.password()));
+    user.setRole(clientRole);
+
+    repository.save(user);
+    return findByUsernameForAuth(user.getUsername());
+  }
+
+  @Transactional(readOnly = true)
+  public UserResponseDto getProfile(String username) {
+    User user = repository.findByUsername(username)
+            .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+    return userMapper.toResponseDto(user);
+  }
+
+  @Transactional
+  public UserResponseDto updateProfile(String username, UserProfileUpdateDto dto) {
+    User user = repository.findByUsername(username)
+            .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+
+    if (!user.getEmail().equals(dto.email()) && repository.existsByEmail(dto.email())) {
+      throw new ConfictException("El email ya está registrado");
+    }
+
+    user.setName(dto.name());
+    user.setSurname(dto.surname());
+    user.setEmail(dto.email());
+
+    return userMapper.toResponseDto(repository.save(user));
+  }
+
+  @Transactional
+  public void changePassword(String username, ChangePasswordDto dto) {
+    User user = repository.findByUsername(username)
+            .orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
+
+    if (!encoder.matches(dto.currentPassword(), user.getPassword())) {
+      throw new BadRequestException("La contraseña actual no es correcta");
+    }
+
+    user.setPassword(encoder.encode(dto.newPassword()));
+    repository.save(user);
   }
 }
