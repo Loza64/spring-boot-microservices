@@ -61,7 +61,7 @@ public class UserServiceImpl implements IBaseService<Long, UserCreateDto, UserUp
     User user = repository.findById(id)
         .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + id));
 
-    if (user.getRole().getName().equals(SUPER_ADMIN)) {
+    if (user.getRole() != null && SUPER_ADMIN.equals(user.getRole().getName())) {
       throw new ConfictException("El usuario super admin no se puede modificar");
     }
 
@@ -88,8 +88,8 @@ public class UserServiceImpl implements IBaseService<Long, UserCreateDto, UserUp
     User user = repository.findById(id)
         .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + id));
 
-    if (user.getRole().getName().equals(SUPER_ADMIN)) {
-      throw new ConfictException("El usuario super admin no se puede eliminar");
+    if (user.getRole() != null && SUPER_ADMIN.equals(user.getRole().getName())) {
+      throw new ConfictException("El usuario super admin no se puede modificar");
     }
 
     if (user.getDeletedAt() != null) {
@@ -106,8 +106,8 @@ public class UserServiceImpl implements IBaseService<Long, UserCreateDto, UserUp
     User user = repository.findById(id)
         .orElseThrow(() -> new NotFoundException("Usuario no encontrado con ID: " + id));
 
-    if (user.getRole().getName().equals(SUPER_ADMIN)) {
-      throw new ConfictException("El usuario super admin no se puede ser eliminado");
+    if (user.getRole() != null && SUPER_ADMIN.equals(user.getRole().getName())) {
+      throw new ConfictException("El usuario super admin no se puede modificar");
     }
 
     if (user.getDeletedAt() == null) {

@@ -17,8 +17,8 @@ import com.app.user_service.common.exceptions.NotFoundException;
 import com.app.user_service.common.exceptions.ServerException;
 import com.app.user_service.common.exceptions.UnauthorizedException;
 import com.app.user_service.common.exceptions.response.ExceptionResponse;
+import org.springframework.security.access.AccessDeniedException;
 
-import java.nio.file.AccessDeniedException;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
