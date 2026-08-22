@@ -3,12 +3,11 @@ server:
 
 spring:
   application:
-    name: USER-SERVICE
+    name: AUTH-SERVICE
   datasource:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,17 +15,28 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 eureka:
   client:
     service-url:
       defaultZone: ${EUREKA_URL:http://localhost:5000/eureka/}
+    fetch-registry: true
+    register-with-eureka: true
     registry-fetch-interval-seconds: 5
   instance:
     prefer-ip-address: false
     hostname: localhost
     instance-id: ${spring.application.name}:${server.port}
+
+services:
+  user-service:
+    url: http://USER-SERVICE/internal/users
+
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: auth-service
+  access-token-expiration-minutes: 30
 
 internal:
   api-key: ${INTERNAL_API_KEY}

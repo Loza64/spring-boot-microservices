@@ -26,7 +26,7 @@ public class UserInternalController {
         return ResponseEntity.ok(userService.findByUsernameForAuth(username));
     }
 
-    @PostMapping("/register")
+    @PostMapping("/signup")
     public ResponseEntity<AuthResponseDto> register(@RequestBody UserRegisterDto dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.registerPublicUser(dto));
     }

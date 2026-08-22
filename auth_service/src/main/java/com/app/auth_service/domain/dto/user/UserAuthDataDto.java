@@ -1,10 +1,8 @@
-package com.app.user_service.domain.dto.user.auth;
-
-import com.app.user_service.domain.dto.role.RoleResponseDto;
+package com.app.auth_service.domain.dto.user;
 
 import java.time.LocalDateTime;
 
-public record AuthResponseDto(
+public record UserAuthDataDto(
         Long id,
         String username,
         String name,
