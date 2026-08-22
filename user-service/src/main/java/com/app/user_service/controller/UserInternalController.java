@@ -14,7 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/internal/users")
+@RequestMapping("api/internal/auth")
 @RequiredArgsConstructor
 @Valid
 public class UserInternalController {

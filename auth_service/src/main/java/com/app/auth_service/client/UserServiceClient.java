@@ -1,8 +1,11 @@
 package com.app.auth_service.client;
 
+import com.app.auth_service.common.exceptions.NotFoundException;
+import com.app.auth_service.common.exceptions.ServerException;
+import com.app.auth_service.common.exceptions.UnauthorizedException;
 import com.app.auth_service.domain.dto.auth.UserRegisterDto;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -17,7 +20,7 @@ public class UserServiceClient {
     private final String internalApiKey;
 
     public UserServiceClient(
-            @Qualifier("loadBalancedRestClientBuilder") RestClient.Builder restClientBuilder,
+            RestClient.Builder restClientBuilder,
             @Value("${services.user-service.url}") String userServiceUrl,
             @Value("${internal.api-key}") String internalApiKey) {
         this.restClient = restClientBuilder.baseUrl(userServiceUrl).build();
@@ -26,18 +29,30 @@ public class UserServiceClient {
 
     public UserAuthDataDto findByUsername(String username) {
         return restClient.get()
-                .uri("/by-username/{username}", username)
+                .uri("/api/internal/auth/by-username/{username}", username)
                 .header(HEADER, internalApiKey)
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                    throw new UnauthorizedException("Usuario o contraseña incorrectos");
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new ServerException("El servicio de usuarios no está disponible");
+                })
                 .body(UserAuthDataDto.class);
     }
 
     public UserAuthDataDto register(UserRegisterDto dto) {
         return restClient.post()
-                .uri("/signup")
+                .uri("/api/internal/auth/signup")
                 .header(HEADER, internalApiKey)
                 .body(dto)
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
+                    throw new NotFoundException("No se pudo registrar el usuario");
+                })
+                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
+                    throw new ServerException("El servicio de usuarios no está disponible");
+                })
                 .body(UserAuthDataDto.class);
     }
 }

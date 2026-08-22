@@ -18,15 +18,5 @@ spring:
         format_sql: true
     open-in-view: false
 
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:5000/eureka/}
-    registry-fetch-interval-seconds: 5
-  instance:
-    prefer-ip-address: false
-    hostname: localhost
-    instance-id: ${spring.application.name}:${server.port}
-
 internal:
   api-key: ${INTERNAL_API_KEY}

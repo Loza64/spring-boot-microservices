@@ -1,28 +1,30 @@
 server:
-  port: 5001
+  port: 5000
 
 spring:
   application:
     name: GATEWAY_SERVICE
   cloud:
     gateway:
-      routes:
-        - id: auth-service-route
-          uri: lb://AUTH-SERVICE
-          predicates:
-            - Path=/api/auth/**
+      server:
+        webflux:
+          routes:
+            - id: auth-service-route
+              uri: ${AUTH_MICROSERVICE}
+              predicates:
+                - Path=/api/auth/**
 
-        - id: user-service-route
-          uri: lb://USER-SERVICE
-          predicates:
-            - Path=/api/users/**
+            - id: user-service-route
+              uri: ${USER_MICROSERVICE}
+              predicates:
+                - Path=/api/users/**
 
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:5000/eureka/}
-    registry-fetch-interval-seconds: 5
-  instance:
-    prefer-ip-address: false
-    hostname: localhost
-    instance-id: ${spring.application.name}:${server.port}
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: gateway

@@ -18,7 +18,7 @@ import java.util.List;
 public class InternalApiKeyFilter extends OncePerRequestFilter {
 
     private static final String HEADER = "X-Internal-Api-Key";
-    private static final String INTERNAL_PREFIX = "/internal";
+    private static final String INTERNAL_PREFIX = "/api/internal";
 
     private final String internalApiKey;
 

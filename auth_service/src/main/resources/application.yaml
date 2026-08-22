@@ -17,21 +17,9 @@ spring:
         format_sql: true
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
-eureka:
-  client:
-    service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:5000/eureka/}
-    fetch-registry: true
-    register-with-eureka: true
-    registry-fetch-interval-seconds: 5
-  instance:
-    prefer-ip-address: false
-    hostname: localhost
-    instance-id: ${spring.application.name}:${server.port}
-
 services:
   user-service:
-    url: http://USER-SERVICE/internal/users
+    url: ${USER_MICROSERVICE}
 
 jwt:
   secret: ${JWT_SECRET}
