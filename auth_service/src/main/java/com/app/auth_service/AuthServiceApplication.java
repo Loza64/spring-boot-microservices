@@ -1,6 +1,6 @@
 package com.app.auth_service;
 
-import com.app.auth_service.config.JwtProperties;
+import com.app.auth_service.infrastructure.config.JwtProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

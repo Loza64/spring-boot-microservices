@@ -37,8 +37,5 @@ public class RefreshToken {
     private Long userId;
 
     @Column(nullable = false)
-    private String username;
-
-    @Column(nullable = false)
     private Instant expiresAt;
 }
