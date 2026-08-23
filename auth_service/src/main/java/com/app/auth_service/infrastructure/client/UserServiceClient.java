@@ -1,10 +1,8 @@
 package com.app.auth_service.infrastructure.client;
 
+import com.app.auth_service.domain.exception.ExternalServiceException;
 import com.app.auth_service.application.dto.auth.UserRegisterDto;
 import com.app.auth_service.application.dto.user.UserAuthDataDto;
-import com.app.auth_service.domain.exception.NotFoundException;
-import com.app.auth_service.domain.exception.ServerException;
-import com.app.auth_service.domain.exception.UnauthorizedException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,12 +34,9 @@ public class UserServiceClient {
                 .uri("/api/internal/auth/by-username/{username}", username)
                 .header(HEADER, internalApiKey)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    String errorMessage = extractErrorMessage(new String(res.getBody().readAllBytes()));
-                    throw new UnauthorizedException(errorMessage);
-                })
-                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    throw new ServerException("El servicio de usuarios no está disponible");
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    String responseBody = new String(res.getBody().readAllBytes());
+                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
                 })
                 .body(UserAuthDataDto.class);
     }
@@ -51,12 +46,9 @@ public class UserServiceClient {
                 .uri("/api/internal/auth/by-id/{id}", id)
                 .header(HEADER, internalApiKey)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    String errorMessage = extractErrorMessage(new String(res.getBody().readAllBytes()));
-                    throw new NotFoundException(errorMessage);
-                })
-                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    throw new ServerException("El servicio de usuarios no está disponible");
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    String responseBody = new String(res.getBody().readAllBytes());
+                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
                 })
                 .body(UserAuthDataDto.class);
     }
@@ -67,12 +59,9 @@ public class UserServiceClient {
                 .header(HEADER, internalApiKey)
                 .body(dto)
                 .retrieve()
-                .onStatus(HttpStatusCode::is4xxClientError, (req, res) -> {
-                    String errorMessage = extractErrorMessage(new String(res.getBody().readAllBytes()));
-                    throw new NotFoundException(errorMessage);
-                })
-                .onStatus(HttpStatusCode::is5xxServerError, (req, res) -> {
-                    throw new ServerException("El servicio de usuarios no está disponible");
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    String responseBody = new String(res.getBody().readAllBytes());
+                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
                 })
                 .body(UserAuthDataDto.class);
     }
@@ -83,7 +72,7 @@ public class UserServiceClient {
             if (jsonNode.has("message")) {
                 return jsonNode.get("message").asText();
             }
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         return responseBody;
     }

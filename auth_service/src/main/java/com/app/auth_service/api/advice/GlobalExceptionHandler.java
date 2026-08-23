@@ -1,5 +1,6 @@
 package com.app.auth_service.api.advice;
 
+import com.app.auth_service.domain.exception.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -10,13 +11,6 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-import com.app.auth_service.domain.exception.BadRequestException;
-import com.app.auth_service.domain.exception.ConflictException;
-import com.app.auth_service.domain.exception.ForbiddenException;
-import com.app.auth_service.domain.exception.NotFoundException;
-import com.app.auth_service.domain.exception.ServerException;
-import com.app.auth_service.domain.exception.UnauthorizedException;
 
 import java.util.stream.Collectors;
 
@@ -90,6 +84,15 @@ public class GlobalExceptionHandler {
   public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
     log.error("Error no controlado", ex);
     return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno del servidor");
+  }
+
+  @ExceptionHandler(ExternalServiceException.class)
+  public ResponseEntity<ErrorResponse> handleExternalServiceException(ExternalServiceException ex) {
+    ErrorResponse error = new ErrorResponse(
+            ex.getStatus(),
+            ex.getMessage()
+    );
+    return ResponseEntity.status(ex.getStatus()).body(error);
   }
 
   private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String message) {
