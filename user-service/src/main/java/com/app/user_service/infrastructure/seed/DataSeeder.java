@@ -24,15 +24,6 @@ import com.app.user_service.infrastructure.persistence.repository.UserRepository
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * Siembra los roles base, todos los permisos declarados en {@link PermissionNames}
- * y un usuario SUPER_ADMIN por defecto la primera vez que la aplicación arranca
- * contra una base de datos vacía.
- * <p>
- * Para que el super admin quede garantizado con id 1, este seeder debe correr
- * contra una base de datos limpia (sin usuarios previos), ya que el id lo asigna
- * el auto-increment de la tabla (GenerationType.IDENTITY).
- */
 @Component
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
@@ -96,8 +87,6 @@ public class DataSeeder implements CommandLineRunner {
           return created;
         });
 
-    // El super admin siempre debe tener TODOS los permisos, incluyendo los que
-    // se agreguen a PermissionNames en el futuro, sin necesidad de configurarlo a mano.
     Set<Permission> current = role.getPermissions() != null ? role.getPermissions() : new HashSet<>();
     Set<Permission> merged = new HashSet<>(current);
     merged.addAll(allPermissions);
