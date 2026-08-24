@@ -34,17 +34,18 @@ public class SecurityConfig {
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(eh -> eh
             .authenticationEntryPoint(authenticationEntryPoint)
-            .accessDeniedHandler(accessDeniedHandler))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                "/api/internal/auth/by-username/**",
-                "/api/internal/auth/by-id/**",
-                "/api/internal/auth/signup")
-            .hasAuthority("INTERNAL_SERVICE")
-            .anyRequest().authenticated()
+            .accessDeniedHandler(accessDeniedHandler)
         )
-        .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .authorizeHttpRequests(auth -> auth
+                    .requestMatchers(
+                            "/api/internal/auth/by-username/**",
+                            "/api/internal/auth/by-id/**",
+                            "/api/internal/auth/signup"
+                    ).hasAuthority("INTERNAL_SERVICE")
+                    .anyRequest().authenticated()
+        );
 
     return http.build();
   }
