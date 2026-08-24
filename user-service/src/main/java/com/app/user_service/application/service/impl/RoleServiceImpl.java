@@ -61,11 +61,9 @@ public class RoleServiceImpl implements RoleService {
   @Transactional
   public RoleResponseDto update(Long id, RoleUpdateDto dto) {
     Role role = repository.findById(id)
-        .orElseThrow(() -> new NotFoundException("Rol no encontrado con ID: " + id));
+            .orElseThrow(() -> new NotFoundException("Rol no encontrado con ID: " + id));
 
-    if (RoleNames.SUPER_ADMIN.equals(role.getName())) {
-      throw new ForbiddenException("El rol SUPER_ADMIN no puede ser editado");
-    }
+    requireNotSuperAdmin(role);
 
     mapper.updateEntity(dto, role);
 
@@ -81,15 +79,17 @@ public class RoleServiceImpl implements RoleService {
   @Transactional(readOnly = true)
   public RoleResponseDto findById(Long id) {
     return repository.findById(id)
-        .map(mapper::toResponseDto)
-        .orElseThrow(() -> new NotFoundException("Rol no encontrado con ID: " + id));
+            .map(mapper::toResponseDto)
+            .orElseThrow(() -> new NotFoundException("Rol no encontrado con ID: " + id));
   }
 
   @Override
   @Transactional
   public void delete(Long id) {
     Role role = repository.findById(id)
-        .orElseThrow(() -> new NotFoundException("Rol no encontrado con ID: " + id));
+            .orElseThrow(() -> new NotFoundException("Rol no encontrado con ID: " + id));
+
+    requireNotSuperAdmin(role);
 
     if (role.getDeletedAt() != null) {
       throw new ConflictException("El rol ya se encuentra eliminado");
@@ -103,7 +103,9 @@ public class RoleServiceImpl implements RoleService {
   @Transactional
   public void restore(Long id) {
     Role role = repository.findById(id)
-        .orElseThrow(() -> new NotFoundException("Rol no encontrado con ID: " + id));
+            .orElseThrow(() -> new NotFoundException("Rol no encontrado con ID: " + id));
+
+    requireNotSuperAdmin(role);
 
     if (role.getDeletedAt() == null) {
       throw new ConflictException("El rol no está eliminado, no se puede restaurar");
@@ -129,16 +131,22 @@ public class RoleServiceImpl implements RoleService {
       return;
 
     Set<String> existing = repository.findAll().stream()
-        .map(Role::getName)
-        .collect(Collectors.toSet());
+            .map(Role::getName)
+            .collect(Collectors.toSet());
 
     List<Role> toCreate = names.stream()
-        .filter(name -> !existing.contains(name))
-        .map(this::buildRole)
-        .toList();
+            .filter(name -> !existing.contains(name))
+            .map(this::buildRole)
+            .toList();
 
     if (!toCreate.isEmpty()) {
       repository.saveAll(toCreate);
+    }
+  }
+
+  private void requireNotSuperAdmin(Role role) {
+    if (RoleNames.SUPER_ADMIN.equals(role.getName())) {
+      throw new ForbiddenException("El rol SUPER_ADMIN no puede ser modificado");
     }
   }
 
@@ -146,4 +154,3 @@ public class RoleServiceImpl implements RoleService {
     return Role.builder().name(name).build();
   }
 }
-

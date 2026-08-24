@@ -25,3 +25,9 @@ jwt:
 
 internal:
   api-key: ${INTERNAL_API_KEY}
+
+seed:
+  super-admin:
+    username: ${SUPER_ADMIN_USERNAME}
+    email: ${SUPER_ADMIN_EMAIL}
+    password: ${SUPER_ADMIN_PASSWORD}

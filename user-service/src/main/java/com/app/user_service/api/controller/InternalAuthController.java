@@ -6,6 +6,7 @@ import com.app.user_service.application.dto.user.auth.ChangePasswordDto;
 import com.app.user_service.application.dto.user.auth.UserProfileUpdateDto;
 import com.app.user_service.application.dto.user.auth.UserRegisterDto;
 import com.app.user_service.application.service.AuthInternalService;
+import com.app.user_service.domain.exception.ForbiddenException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Valid
 public class InternalAuthController {
+
+  private static final String INTERNAL_SERVICE_AUTHORITY = "INTERNAL_SERVICE";
 
   private final AuthInternalService authInternalService;
 
@@ -38,18 +41,32 @@ public class InternalAuthController {
 
   @GetMapping("/profile")
   public ResponseEntity<UserResponseDto> me(Authentication authentication) {
-    return ResponseEntity.ok(authInternalService.getProfile(Long.valueOf(authentication.getName())));
+    return ResponseEntity.ok(authInternalService.getProfile(resolveUserId(authentication)));
   }
 
   @PutMapping("/profile")
   public ResponseEntity<UserResponseDto> updateMe(Authentication authentication, @RequestBody UserProfileUpdateDto dto) {
-    return ResponseEntity.ok(authInternalService.updateProfile(Long.valueOf(authentication.getName()), dto));
+    return ResponseEntity.ok(authInternalService.updateProfile(resolveUserId(authentication), dto));
   }
 
   @PutMapping("/profile/password")
   public ResponseEntity<Void> changeMyPassword(Authentication authentication, @RequestBody ChangePasswordDto dto) {
-    authInternalService.changePassword(Long.valueOf(authentication.getName()), dto);
+    authInternalService.changePassword(resolveUserId(authentication), dto);
     return ResponseEntity.noContent().build();
   }
-}
 
+  private Long resolveUserId(Authentication authentication) {
+    boolean isInternalServiceCall = authentication.getAuthorities().stream()
+        .anyMatch(authority -> authority.getAuthority().equals(INTERNAL_SERVICE_AUTHORITY));
+
+    if (isInternalServiceCall) {
+      throw new ForbiddenException("Esta operación requiere el token de un usuario autenticado");
+    }
+
+    try {
+      return Long.valueOf(authentication.getName());
+    } catch (NumberFormatException e) {
+      throw new ForbiddenException("Esta operación requiere el token de un usuario autenticado");
+    }
+  }
+}

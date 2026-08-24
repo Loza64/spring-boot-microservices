@@ -10,6 +10,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.app.auth_service.infrastructure.security.JwtAuthenticationFilter;
+import com.app.auth_service.infrastructure.security.RestAccessDeniedHandler;
 import com.app.auth_service.infrastructure.security.RestAuthenticationEntryPoint;
 
 import lombok.RequiredArgsConstructor;
@@ -22,13 +23,16 @@ public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final RestAuthenticationEntryPoint authenticationEntryPoint;
+  private final RestAccessDeniedHandler accessDeniedHandler;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
         .csrf(csrf -> csrf.disable())
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .exceptionHandling(eh -> eh.authenticationEntryPoint(authenticationEntryPoint))
+        .exceptionHandling(eh -> eh
+            .authenticationEntryPoint(authenticationEntryPoint)
+            .accessDeniedHandler(accessDeniedHandler))
         .authorizeHttpRequests(auth -> auth
             .requestMatchers(
                     "/api/auth/login",

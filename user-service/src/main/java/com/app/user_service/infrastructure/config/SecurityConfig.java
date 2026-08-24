@@ -11,6 +11,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.app.user_service.infrastructure.security.JwtAuthenticationFilter;
+import com.app.user_service.infrastructure.security.RestAccessDeniedHandler;
+import com.app.user_service.infrastructure.security.RestAuthenticationEntryPoint;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,21 +24,26 @@ public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final InternalApiKeyFilter internalApiKeyFilter;
+  private final RestAuthenticationEntryPoint authenticationEntryPoint;
+  private final RestAccessDeniedHandler accessDeniedHandler;
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(
-                            "/api/internal/auth/by-username/**",
-                            "/api/internal/auth/by-id/**",
-                            "/api/internal/auth/signup")
-                    .hasAuthority("INTERNAL_SERVICE")
-                    .anyRequest().authenticated())
-            .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        .csrf(csrf -> csrf.disable())
+        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(eh -> eh
+            .authenticationEntryPoint(authenticationEntryPoint)
+            .accessDeniedHandler(accessDeniedHandler))
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers(
+                "/api/internal/auth/by-username/**",
+                "/api/internal/auth/by-id/**",
+                "/api/internal/auth/signup")
+            .hasAuthority("INTERNAL_SERVICE")
+            .anyRequest().authenticated())
+        .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
