@@ -33,15 +33,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (header != null && header.startsWith("Bearer ")) {
       String token = header.substring(7);
 
-      System.out.println(token);
       Optional<TokenClaims> claimsOpt = tokenService.parseToken(token);
 
       if (claimsOpt.isPresent()) {
         TokenClaims claims = claimsOpt.get();
-
-        System.out.println(claims.role());
-        System.out.println(claims.id());
-        System.out.println(claims.permissions());
 
         List<GrantedAuthority> authorities = new ArrayList<>();
         if (claims.role() != null) {
