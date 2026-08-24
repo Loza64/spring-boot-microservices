@@ -79,7 +79,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public ProfileResponseDto getProfile(String authorizationHeader) {
     requireAuthorization(authorizationHeader);
-    UserProfileDataDto user = userServiceClient.getProfile(authorizationHeader);
+    UserProfileDataDto user = userServiceClient.profile(authorizationHeader);
     return authMapper.toProfileResponseDto(user);
   }
 
@@ -93,7 +93,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public void changePassword(String authorizationHeader, ChangePasswordRequestDto dto) {
     requireAuthorization(authorizationHeader);
-    userServiceClient.changePassword(authorizationHeader, dto);
+    userServiceClient.updatePassword(authorizationHeader, dto);
   }
 
   private void requireAuthorization(String authorizationHeader) {

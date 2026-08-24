@@ -48,7 +48,7 @@ public class RoleServiceImpl implements RoleService {
       throw new ConflictException("El rol con nombre " + dto.name() + " ya existe");
     }
 
-    Role role = mapper.toEntity(dto);
+    Role role = mapper.toEntityCreate(dto);
     if (dto.permissions() != null) {
       List<Long> ids = dto.permissions().stream().map(IdDto::getId).toList();
       role.setPermissions(new HashSet<>(permissionRepository.findAllById(ids)));
@@ -65,7 +65,7 @@ public class RoleServiceImpl implements RoleService {
 
     requireNotSuperAdmin(role);
 
-    mapper.updateEntity(dto, role);
+    mapper.toUpdateEntity(dto, role);
 
     if (dto.permissions() != null) {
       List<Long> ids = dto.permissions().stream().map(IdDto::getId).toList();

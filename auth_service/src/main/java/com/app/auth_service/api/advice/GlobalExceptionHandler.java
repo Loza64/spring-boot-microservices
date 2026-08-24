@@ -88,10 +88,10 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(ExternalServiceException.class)
   public ResponseEntity<ErrorResponse> handleExternalServiceException(ExternalServiceException ex) {
-    ErrorResponse error = new ErrorResponse(
-            ex.getStatus(),
-            ex.getMessage()
-    );
+    if (ex.isConnectionFailure()) {
+      return buildResponse(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage());
+    }
+    ErrorResponse error = new ErrorResponse(ex.getStatus(), ex.getMessage());
     return ResponseEntity.status(ex.getStatus()).body(error);
   }
 

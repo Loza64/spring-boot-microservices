@@ -41,7 +41,8 @@ public class SecurityConfig {
                 "/api/internal/auth/by-id/**",
                 "/api/internal/auth/signup")
             .hasAuthority("INTERNAL_SERVICE")
-            .anyRequest().authenticated())
+            .anyRequest().authenticated()
+        )
         .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

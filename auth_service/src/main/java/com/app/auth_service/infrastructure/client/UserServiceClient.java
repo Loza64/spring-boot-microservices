@@ -1,124 +1,106 @@
 package com.app.auth_service.infrastructure.client;
 
-import com.app.auth_service.domain.exception.ExternalServiceException;
 import com.app.auth_service.application.dto.auth.ChangePasswordRequestDto;
 import com.app.auth_service.application.dto.auth.ProfileUpdateRequestDto;
 import com.app.auth_service.application.dto.auth.UserRegisterDto;
 import com.app.auth_service.application.dto.user.UserAuthDataDto;
 import com.app.auth_service.application.dto.user.UserProfileDataDto;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+@Slf4j
 @Component
-public class UserServiceClient {
+@RequiredArgsConstructor
+public class UserServiceClient extends AbstractServiceClient {
 
     private static final String HEADER = "X-Internal-Api-Key";
+    private static final String SERVICE_NAME = "user-service";
 
-    private final RestClient restClient;
-    private final String internalApiKey;
-    private final ObjectMapper objectMapper;
+    private final RestClient.Builder restClientBuilder;
+    private final RestClientErrorHandler errorHandler;
 
-    public UserServiceClient(
-            RestClient.Builder restClientBuilder,
-            @Value("${services.user-service.url}") String userServiceUrl,
-            @Value("${internal.api-key}") String internalApiKey,
-            ObjectMapper objectMapper) {
+    @Value("${services.user-service.url}")
+    private String userServiceUrl;
+
+    @Value("${internal.api-key}")
+    private String internalApiKey;
+
+    private RestClient restClient;
+
+    @PostConstruct
+    public void init() {
         this.restClient = restClientBuilder.baseUrl(userServiceUrl).build();
-        this.internalApiKey = internalApiKey;
-        this.objectMapper = objectMapper;
     }
 
+    @Override
+    protected String getServiceName() {
+        return SERVICE_NAME;
+    }
+
+    //X-Internal-Api-Key
     public UserAuthDataDto findByUsername(String username) {
-        return restClient.get()
+        return execute(() -> restClient.get()
                 .uri("/api/internal/auth/by-username/{username}", username)
                 .header(HEADER, internalApiKey)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    String responseBody = new String(res.getBody().readAllBytes());
-                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
-                })
-                .body(UserAuthDataDto.class);
+                .onStatus(errorHandler)
+                .body(UserAuthDataDto.class));
     }
 
     public UserAuthDataDto findById(Long id) {
-        return restClient.get()
+        return execute(() -> restClient.get()
                 .uri("/api/internal/auth/by-id/{id}", id)
                 .header(HEADER, internalApiKey)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    String responseBody = new String(res.getBody().readAllBytes());
-                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
-                })
-                .body(UserAuthDataDto.class);
+                .onStatus(errorHandler)
+                .body(UserAuthDataDto.class));
     }
 
     public UserAuthDataDto register(UserRegisterDto dto) {
-        return restClient.post()
+        return execute(() -> restClient.post()
                 .uri("/api/internal/auth/signup")
                 .header(HEADER, internalApiKey)
                 .body(dto)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    String responseBody = new String(res.getBody().readAllBytes());
-                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
-                })
-                .body(UserAuthDataDto.class);
+                .onStatus(errorHandler)
+                .body(UserAuthDataDto.class));
     }
 
-    public UserProfileDataDto getProfile(String authorizationHeader) {
-        return restClient.get()
-                .uri("/api/internal/auth/profile")
-                .header(HEADER, internalApiKey)
+    //Bearer token
+    public UserProfileDataDto profile(String authorizationHeader) {
+        return execute(() -> restClient.get()
+                .uri("/api/auth/profile")
                 .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    String responseBody = new String(res.getBody().readAllBytes());
-                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
-                })
-                .body(UserProfileDataDto.class);
+                .onStatus(errorHandler)
+                .body(UserProfileDataDto.class));
     }
 
     public UserProfileDataDto updateProfile(String authorizationHeader, ProfileUpdateRequestDto dto) {
-        return restClient.put()
-                .uri("/api/internal/auth/profile")
-                .header(HEADER, internalApiKey)
+        return execute(() -> restClient.put()
+                .uri("/api/auth/profile")
                 .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
                 .body(dto)
                 .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    String responseBody = new String(res.getBody().readAllBytes());
-                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
-                })
-                .body(UserProfileDataDto.class);
+                .onStatus(errorHandler)
+                .body(UserProfileDataDto.class));
     }
 
-    public void changePassword(String authorizationHeader, ChangePasswordRequestDto dto) {
-        restClient.put()
-                .uri("/api/internal/auth/profile/password")
-                .header(HEADER, internalApiKey)
-                .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
-                .body(dto)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    String responseBody = new String(res.getBody().readAllBytes());
-                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
-                })
-                .toBodilessEntity();
-    }
-
-    private String extractErrorMessage(String responseBody) {
-        try {
-            JsonNode jsonNode = objectMapper.readTree(responseBody);
-            if (jsonNode.has("message")) {
-                return jsonNode.get("message").asText();
-            }
-        } catch (Exception ignored) {
-        }
-        return responseBody;
+    public void updatePassword(String authorizationHeader, ChangePasswordRequestDto dto) {
+        execute(() -> {
+            restClient.put()
+                    .uri("/api/auth/profile/password")
+                    .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
+                    .body(dto)
+                    .retrieve()
+                    .onStatus(errorHandler)
+                    .toBodilessEntity();
+            return null;
+        });
     }
 }

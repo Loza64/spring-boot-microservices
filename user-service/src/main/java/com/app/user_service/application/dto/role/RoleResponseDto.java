@@ -9,6 +9,8 @@ public record RoleResponseDto(
     Long id,
     String name,
     Set<PermissionResponseDto> permissions,
-    LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime deletedAt) {
-}
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    LocalDateTime deletedAt
+) { }
 

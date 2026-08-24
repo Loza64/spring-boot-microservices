@@ -20,7 +20,7 @@ public interface RoleMapper {
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "updatedAt", ignore = true)
   @Mapping(target = "deletedAt", ignore = true)
-  Role toEntity(RoleCreateDto dto);
+  Role toEntityCreate(RoleCreateDto dto);
 
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   @Mapping(target = "id", ignore = true)
@@ -28,9 +28,11 @@ public interface RoleMapper {
   @Mapping(target = "createdAt", ignore = true)
   @Mapping(target = "updatedAt", ignore = true)
   @Mapping(target = "deletedAt", ignore = true)
-  void updateEntity(RoleUpdateDto dto, @MappingTarget Role entity);
+  void toUpdateEntity(RoleUpdateDto dto, @MappingTarget Role entity);
 
   RoleResponseDto toResponseDto(Role r);
+
+  Role toEntityResponse(RoleResponseDto role);
 
   @Named("toSummaryDto")
   @Mapping(target = "permissions", ignore = true)

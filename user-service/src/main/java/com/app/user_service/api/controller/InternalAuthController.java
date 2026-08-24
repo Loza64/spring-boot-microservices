@@ -20,10 +20,9 @@ import org.springframework.web.bind.annotation.*;
 @Valid
 public class InternalAuthController {
 
-  private static final String INTERNAL_SERVICE_AUTHORITY = "INTERNAL_SERVICE";
-
   private final AuthInternalService authInternalService;
 
+  //X-Internal-Api-Key
   @GetMapping("/by-username/{username}")
   public ResponseEntity<AuthResponseDto> findByUsernameForAuth(@PathVariable String username) {
     return ResponseEntity.ok(authInternalService.findByUsernameForAuth(username));
@@ -37,36 +36,5 @@ public class InternalAuthController {
   @PostMapping("/signup")
   public ResponseEntity<AuthResponseDto> register(@RequestBody UserRegisterDto dto) {
     return ResponseEntity.status(HttpStatus.CREATED).body(authInternalService.registerPublicUser(dto));
-  }
-
-  @GetMapping("/profile")
-  public ResponseEntity<UserResponseDto> me(Authentication authentication) {
-    return ResponseEntity.ok(authInternalService.getProfile(resolveUserId(authentication)));
-  }
-
-  @PutMapping("/profile")
-  public ResponseEntity<UserResponseDto> updateMe(Authentication authentication, @RequestBody UserProfileUpdateDto dto) {
-    return ResponseEntity.ok(authInternalService.updateProfile(resolveUserId(authentication), dto));
-  }
-
-  @PutMapping("/profile/password")
-  public ResponseEntity<Void> changeMyPassword(Authentication authentication, @RequestBody ChangePasswordDto dto) {
-    authInternalService.changePassword(resolveUserId(authentication), dto);
-    return ResponseEntity.noContent().build();
-  }
-
-  private Long resolveUserId(Authentication authentication) {
-    boolean isInternalServiceCall = authentication.getAuthorities().stream()
-        .anyMatch(authority -> authority.getAuthority().equals(INTERNAL_SERVICE_AUTHORITY));
-
-    if (isInternalServiceCall) {
-      throw new ForbiddenException("Esta operación requiere el token de un usuario autenticado");
-    }
-
-    try {
-      return Long.valueOf(authentication.getName());
-    } catch (NumberFormatException e) {
-      throw new ForbiddenException("Esta operación requiere el token de un usuario autenticado");
-    }
   }
 }
