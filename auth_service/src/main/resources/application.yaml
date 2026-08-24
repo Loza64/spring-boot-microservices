@@ -23,7 +23,7 @@ services:
 
 jwt:
   secret: ${JWT_SECRET}
-  issuer: auth-service
+  issuer: ${JWT_ISSUER}
   access-token-expiration-minutes: 30
 
 internal:

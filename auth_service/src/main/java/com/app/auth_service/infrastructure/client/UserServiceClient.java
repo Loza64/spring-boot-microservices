@@ -1,11 +1,15 @@
 package com.app.auth_service.infrastructure.client;
 
 import com.app.auth_service.domain.exception.ExternalServiceException;
+import com.app.auth_service.application.dto.auth.ChangePasswordRequestDto;
+import com.app.auth_service.application.dto.auth.ProfileUpdateRequestDto;
 import com.app.auth_service.application.dto.auth.UserRegisterDto;
 import com.app.auth_service.application.dto.user.UserAuthDataDto;
+import com.app.auth_service.application.dto.user.UserProfileDataDto;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -64,6 +68,47 @@ public class UserServiceClient {
                     throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
                 })
                 .body(UserAuthDataDto.class);
+    }
+
+    public UserProfileDataDto getProfile(String authorizationHeader) {
+        return restClient.get()
+                .uri("/api/internal/auth/profile")
+                .header(HEADER, internalApiKey)
+                .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    String responseBody = new String(res.getBody().readAllBytes());
+                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
+                })
+                .body(UserProfileDataDto.class);
+    }
+
+    public UserProfileDataDto updateProfile(String authorizationHeader, ProfileUpdateRequestDto dto) {
+        return restClient.put()
+                .uri("/api/internal/auth/profile")
+                .header(HEADER, internalApiKey)
+                .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
+                .body(dto)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    String responseBody = new String(res.getBody().readAllBytes());
+                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
+                })
+                .body(UserProfileDataDto.class);
+    }
+
+    public void changePassword(String authorizationHeader, ChangePasswordRequestDto dto) {
+        restClient.put()
+                .uri("/api/internal/auth/profile/password")
+                .header(HEADER, internalApiKey)
+                .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
+                .body(dto)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    String responseBody = new String(res.getBody().readAllBytes());
+                    throw new ExternalServiceException(res.getStatusCode().value(), extractErrorMessage(responseBody));
+                })
+                .toBodilessEntity();
     }
 
     private String extractErrorMessage(String responseBody) {

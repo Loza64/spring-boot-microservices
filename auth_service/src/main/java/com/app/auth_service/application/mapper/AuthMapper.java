@@ -13,6 +13,7 @@ import com.app.auth_service.application.dto.user.PermissionResponseDto;
 import com.app.auth_service.application.dto.user.ProfileResponseDto;
 import com.app.auth_service.application.dto.user.RoleResponseDto;
 import com.app.auth_service.application.dto.user.UserAuthDataDto;
+import com.app.auth_service.application.dto.user.UserProfileDataDto;
 
 @Mapper(componentModel = "spring")
 public interface AuthMapper {
@@ -20,6 +21,8 @@ public interface AuthMapper {
   UserRegisterDto toUserRegisterDto(SignUpRequestDto dto);
 
   ProfileResponseDto toProfileResponseDto(UserAuthDataDto user);
+
+  ProfileResponseDto toProfileResponseDto(UserProfileDataDto user);
 
   @Mapping(target = "role", source = "role", qualifiedByName = "roleName")
   @Mapping(target = "permissions", source = "role", qualifiedByName = "permissionNames")

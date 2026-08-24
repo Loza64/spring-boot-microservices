@@ -1,4 +1,4 @@
-package com.app.user_service.infrastructure.security;
+package com.app.auth_service.infrastructure.security;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,6 +11,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.app.auth_service.application.dto.auth.TokenClaims;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -33,15 +35,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (header != null && header.startsWith("Bearer ")) {
       String token = header.substring(7);
 
-      System.out.println(token);
       Optional<TokenClaims> claimsOpt = tokenService.parseToken(token);
 
       if (claimsOpt.isPresent()) {
         TokenClaims claims = claimsOpt.get();
-
-        System.out.println(claims.role());
-        System.out.println(claims.id());
-        System.out.println(claims.permissions());
 
         List<GrantedAuthority> authorities = new ArrayList<>();
         if (claims.role() != null) {
@@ -52,7 +49,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         var authentication = new UsernamePasswordAuthenticationToken(String.valueOf(claims.id()), null, authorities);
-
         SecurityContextHolder.getContext().setAuthentication(authentication);
       } else {
         SecurityContextHolder.clearContext();

@@ -4,12 +4,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.app.auth_service.application.dto.auth.AuthResponseDto;
+import com.app.auth_service.application.dto.auth.ChangePasswordRequestDto;
 import com.app.auth_service.application.dto.auth.LoginRequestDto;
+import com.app.auth_service.application.dto.auth.ProfileUpdateRequestDto;
 import com.app.auth_service.application.dto.auth.RefreshRequestDto;
 import com.app.auth_service.application.dto.auth.SignUpRequestDto;
 import com.app.auth_service.application.dto.auth.TokenClaims;
 import com.app.auth_service.application.dto.auth.UserRegisterDto;
+import com.app.auth_service.application.dto.user.ProfileResponseDto;
 import com.app.auth_service.application.dto.user.UserAuthDataDto;
+import com.app.auth_service.application.dto.user.UserProfileDataDto;
 import com.app.auth_service.application.mapper.AuthMapper;
 import com.app.auth_service.application.service.AuthService;
 import com.app.auth_service.application.service.JwtService;
@@ -70,6 +74,32 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public void logout(RefreshRequestDto dto) {
     refreshTokenService.revoke(dto.refreshToken());
+  }
+
+  @Override
+  public ProfileResponseDto getProfile(String authorizationHeader) {
+    requireAuthorization(authorizationHeader);
+    UserProfileDataDto user = userServiceClient.getProfile(authorizationHeader);
+    return authMapper.toProfileResponseDto(user);
+  }
+
+  @Override
+  public ProfileResponseDto updateProfile(String authorizationHeader, ProfileUpdateRequestDto dto) {
+    requireAuthorization(authorizationHeader);
+    UserProfileDataDto user = userServiceClient.updateProfile(authorizationHeader, dto);
+    return authMapper.toProfileResponseDto(user);
+  }
+
+  @Override
+  public void changePassword(String authorizationHeader, ChangePasswordRequestDto dto) {
+    requireAuthorization(authorizationHeader);
+    userServiceClient.changePassword(authorizationHeader, dto);
+  }
+
+  private void requireAuthorization(String authorizationHeader) {
+    if (authorizationHeader == null || authorizationHeader.isBlank()) {
+      throw new UnauthorizedException("No autenticado");
+    }
   }
 
   private AuthResponseDto buildAuthResponse(UserAuthDataDto user) {

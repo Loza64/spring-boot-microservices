@@ -18,5 +18,10 @@ spring:
         format_sql: true
     open-in-view: false
 
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: ${JWT_ISSUER}
+  access-token-expiration-minutes: 30
+
 internal:
   api-key: ${INTERNAL_API_KEY}

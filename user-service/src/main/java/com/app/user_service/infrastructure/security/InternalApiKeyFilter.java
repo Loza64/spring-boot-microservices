@@ -31,10 +31,8 @@ public class InternalApiKeyFilter extends OncePerRequestFilter {
 
         if (request.getRequestURI().startsWith(INTERNAL_PREFIX)) {
             String provided = request.getHeader(HEADER);
-
             if (provided != null && provided.equals(internalApiKey)) {
-                var authentication = new UsernamePasswordAuthenticationToken(
-                        "internal-service", null, List.of(new SimpleGrantedAuthority("INTERNAL_SERVICE")));
+                var authentication = new UsernamePasswordAuthenticationToken("internal-service", null, List.of(new SimpleGrantedAuthority("INTERNAL_SERVICE")));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
