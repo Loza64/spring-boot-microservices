@@ -1,3 +1,4 @@
 .vscode
 .idea
 *.env
+/k8s/env-secret.yaml
