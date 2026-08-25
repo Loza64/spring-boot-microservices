@@ -22,7 +22,7 @@ RUN mkdir -p /tmp && chown springboot:javaapp /tmp
 
 USER springboot
 
-EXPOSE 5002
+EXPOSE 5001
 
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
