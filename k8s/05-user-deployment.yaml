@@ -29,17 +29,24 @@ spec:
                 name: app-config
             - secretRef:
                 name: app-secrets
+          startupProbe:
+            # Da hasta 30 * 5s = 150s para arrancar. En los logs, user-service
+            # tardó ~41s en levantar (JPA + seed de datos) — el liveness
+            # anterior lo mataba a los ~56s por chequear demasiado pronto.
+            httpGet:
+              path: /actuator/health/readiness
+              port: 5002
+            failureThreshold: 30
+            periodSeconds: 5
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: 5002
-            initialDelaySeconds: 20
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
               port: 5002
-            initialDelaySeconds: 30
             periodSeconds: 15
           resources:
             requests:
