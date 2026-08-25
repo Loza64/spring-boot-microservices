@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgres-allow-only-services
+  namespace: spring-microservices
+spec:
+  podSelector:
+    matchLabels:
+      app: postgres
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: auth-service
+        - podSelector:
+            matchLabels:
+              app: user-service
+      ports:
+        - protocol: TCP
+          port: 5432
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: gateway-no-direct-db-access
+  namespace: spring-microservices
+spec:
+  podSelector:
+    matchLabels:
+      app: gateway-service
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: auth-service
+        - podSelector:
+            matchLabels:
+              app: user-service
+    - to: [] # permite DNS y salida general; ajusta según tu clúster
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
