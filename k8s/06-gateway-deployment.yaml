@@ -28,8 +28,6 @@ spec:
             - secretRef:
                 name: app-secrets
           startupProbe:
-            # El gateway arrancó en ~19-23s en las pruebas, pero mantenemos
-            # el mismo margen generoso por consistencia con los otros dos.
             httpGet:
               path: /actuator/health
               port: 5000

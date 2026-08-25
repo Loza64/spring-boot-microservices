@@ -30,10 +30,6 @@ spec:
             - secretRef:
                 name: app-secrets
           startupProbe:
-            # Da hasta 30 * 5s = 150s para que el JVM/Spring Boot termine
-            # de arrancar (auth-service tardó ~40s en las pruebas). Mientras
-            # el startupProbe no pase, k8s NO ejecuta readiness/liveness,
-            # así que no hay riesgo de que lo maten a mitad de arranque.
             httpGet:
               path: /actuator/health/readiness
               port: 5001
