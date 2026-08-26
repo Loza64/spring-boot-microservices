@@ -1,47 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: gateway-service
+  name: user-service
   namespace: spring-microservices
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: gateway-service
+      app: user-service
   template:
     metadata:
       labels:
-        app: gateway-service
+        app: user-service
     spec:
       containers:
-        - name: gateway-service
-          image: loza64/gateway-service:1.0.1
+        - name: user-service
+          image: loza64/user-service:1.0.2
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 5000
+            - containerPort: 5002
           env:
             - name: SERVER_PORT
-              value: "5000"
+              value: "5002"
+            - name: DB_URL
+              value: "jdbc:postgresql://postgres-service:5432/user_db"
           envFrom:
             - configMapRef:
                 name: app-config
             - secretRef:
                 name: app-secrets
+            - secretRef:
+                name: user-service-env
           startupProbe:
             httpGet:
-              path: /actuator/health
-              port: 5000
+              path: /actuator/health/readiness
+              port: 5002
+            initialDelaySeconds: 15   # <-- Da un respiro de 15s para que Spring Boot levante el puerto
             failureThreshold: 30
             periodSeconds: 5
           readinessProbe:
             httpGet:
-              path: /actuator/health
-              port: 5000
+              path: /actuator/health/readiness
+              port: 5002
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /actuator/health
-              port: 5000
+              path: /actuator/health/liveness
+              port: 5002
             periodSeconds: 15
           resources:
             requests:
@@ -54,12 +59,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: gateway-service
+  name: user-service # DNS interno: http://user-service:5002
   namespace: spring-microservices
 spec:
-  type: LoadBalancer # Único punto expuesto hacia afuera
+  type: ClusterIP
   selector:
-    app: gateway-service
+    app: user-service
   ports:
-    - port: 80
-      targetPort: 5000
+    - port: 5002
+      targetPort: 5002

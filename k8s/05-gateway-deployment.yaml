@@ -1,49 +1,50 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: auth-service
+  name: gateway-service
   namespace: spring-microservices
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: auth-service
+      app: gateway-service
   template:
     metadata:
       labels:
-        app: auth-service
+        app: gateway-service
     spec:
       containers:
-        - name: auth-service
-          image: loza64/auth-service:1.0.1
+        - name: gateway-service
+          image: loza64/gateway-service:1.0.2
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 5001
+            - containerPort: 5000
           env:
             - name: SERVER_PORT
-              value: "5001"
-            - name: DB_URL
-              value: "jdbc:postgresql://postgres-service:5432/auth_db"
+              value: "5000"
           envFrom:
             - configMapRef:
                 name: app-config
             - secretRef:
                 name: app-secrets
+            - secretRef:
+                name: gateway-service-env
           startupProbe:
             httpGet:
-              path: /actuator/health/readiness
-              port: 5001
+              path: /actuator/health
+              port: 5000
+            initialDelaySeconds: 15   # <-- Da un respiro de 15s para que Spring Cloud Gateway levante
             failureThreshold: 30
             periodSeconds: 5
           readinessProbe:
             httpGet:
-              path: /actuator/health/readiness
-              port: 5001
+              path: /actuator/health
+              port: 5000
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /actuator/health/liveness
-              port: 5001
+              path: /actuator/health
+              port: 5000
             periodSeconds: 15
           resources:
             requests:
@@ -56,12 +57,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: auth-service # DNS interno: http://auth-service:5001
+  name: gateway-service
   namespace: spring-microservices
 spec:
-  type: ClusterIP
+  type: LoadBalancer # Único punto expuesto hacia afuera
   selector:
-    app: auth-service
+    app: gateway-service
   ports:
-    - port: 5001
-      targetPort: 5001
+    - port: 80
+      targetPort: 5000

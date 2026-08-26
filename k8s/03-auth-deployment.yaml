@@ -1,49 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-service
+  name: auth-service
   namespace: spring-microservices
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user-service
+      app: auth-service
   template:
     metadata:
       labels:
-        app: user-service
+        app: auth-service
     spec:
       containers:
-        - name: user-service
-          image: loza64/user-service:1.0.1
+        - name: auth-service
+          image: loza64/auth-service:1.0.2
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 5002
+            - containerPort: 5001
           env:
             - name: SERVER_PORT
-              value: "5002"
+              value: "5001"
             - name: DB_URL
-              value: "jdbc:postgresql://postgres-service:5432/user_db"
+              value: "jdbc:postgresql://postgres-service:5432/auth_db"
           envFrom:
             - configMapRef:
                 name: app-config
             - secretRef:
                 name: app-secrets
+            - secretRef:
+                name: auth-service-env
           startupProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 5002
+              port: 5001
+            initialDelaySeconds: 15   # <-- Da un respiro de 15s para que Spring Boot levante el puerto
             failureThreshold: 30
             periodSeconds: 5
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 5002
+              port: 5001
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 5002
+              port: 5001
             periodSeconds: 15
           resources:
             requests:
@@ -56,12 +59,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: user-service # DNS interno: http://user-service:5002
+  name: auth-service # DNS interno: http://auth-service:5001
   namespace: spring-microservices
 spec:
   type: ClusterIP
   selector:
-    app: user-service
+    app: auth-service
   ports:
-    - port: 5002
-      targetPort: 5002
+    - port: 5001
+      targetPort: 5001

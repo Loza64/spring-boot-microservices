@@ -28,7 +28,7 @@ public class SecurityConfig {
   private final RestAccessDeniedHandler accessDeniedHandler;
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
     http
         .csrf(csrf -> csrf.disable())
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -39,11 +39,8 @@ public class SecurityConfig {
             .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(
-                            "/api/internal/auth/by-username/**",
-                            "/api/internal/auth/by-id/**",
-                            "/api/internal/auth/signup"
-                    ).hasAuthority("INTERNAL_SERVICE")
+                    .requestMatchers("/api/internal/auth/by-username/**", "/api/internal/auth/by-id/**", "/api/internal/auth/signup").hasAuthority("INTERNAL_SERVICE")
+                    .requestMatchers("/actuator/**").permitAll()
                     .anyRequest().authenticated()
         );
 

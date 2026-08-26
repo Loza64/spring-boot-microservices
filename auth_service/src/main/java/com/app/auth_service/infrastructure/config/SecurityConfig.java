@@ -34,13 +34,9 @@ public class SecurityConfig {
             .authenticationEntryPoint(authenticationEntryPoint)
             .accessDeniedHandler(accessDeniedHandler))
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers(
-                    "/api/auth/login",
-                    "/api/auth/signup",
-                    "/api/auth/refresh",
-                    "/api/auth/logout"
-            ).permitAll()
-            .anyRequest().authenticated())
+                .requestMatchers("/api/auth/login", "/api/auth/signup", "/api/auth/refresh", "/api/auth/logout", "/actuator/**").permitAll()
+                .anyRequest().authenticated()
+        )
         .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();

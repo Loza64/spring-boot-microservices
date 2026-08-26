@@ -27,7 +27,7 @@ EXPOSE 5002
 ENV JAVA_OPTS="-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/actuator/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:5002/actuator/health || exit 1
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
