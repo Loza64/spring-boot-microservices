@@ -6,4 +6,4 @@ metadata:
 data:
   AUTH_MICROSERVICE: "http://auth-service:5001"
   USER_MICROSERVICE: "http://user-service:5002"
-  JWT_ISSUER: "auth-token-microservice-issue"
+  JWT_ISSUER: "auth-token-microservice-issuer"

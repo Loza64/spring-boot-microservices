@@ -13,12 +13,6 @@ secretGenerator:
   - name: app-secrets
     envs:
       - .env
-  - name: auth-service-env
-    envs:
-      - auth_service/.env
-  - name: gateway-service-env
-    envs:
-      - gateway_service/.env
   - name: user-service-env
     envs:
       - user-service/.env

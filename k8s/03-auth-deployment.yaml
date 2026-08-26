@@ -29,8 +29,6 @@ spec:
                 name: app-config
             - secretRef:
                 name: app-secrets
-            - secretRef:
-                name: auth-service-env
           startupProbe:
             httpGet:
               path: /actuator/health/readiness

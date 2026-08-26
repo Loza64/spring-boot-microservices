@@ -27,8 +27,6 @@ spec:
                 name: app-config
             - secretRef:
                 name: app-secrets
-            - secretRef:
-                name: gateway-service-env
           startupProbe:
             httpGet:
               path: /actuator/health
