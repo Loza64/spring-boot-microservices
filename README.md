@@ -77,9 +77,9 @@ JWT_SECRET=R0VSMzQwUlVXUTA4OVJVUU1XRElPUVdKUkpFV09QUklFV0RCR0RCR0hKR0hKR0hOR0hOR
 ### 4.2 `user-service/.env`
 
 ```env
-SUPER_ADMIN_EMAIL=robertoloxa88@gmail.com
-SUPER_ADMIN_PASSWORD=passW1234-
-SUPER_ADMIN_USERNAME=loza.dev
+SUPER_ADMIN_EMAIL=correo88@sadmin.com
+SUPER_ADMIN_PASSWORD=mipass2423-
+SUPER_ADMIN_USERNAME=super.admin
 ```
 
 Solo lo lee `user-service` (siembra una cuenta admin al arrancar). No tiene sentido exponerlo a auth-service ni gateway-service, por eso vive separado.
