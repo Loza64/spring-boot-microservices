@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: gateway-service
-          image: loza64/gateway-service:1.0.2
+          image: loza64/gateway-service:1.0.3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5000
@@ -31,7 +31,7 @@ spec:
             httpGet:
               path: /actuator/health
               port: 5000
-            initialDelaySeconds: 15   # <-- Da un respiro de 15s para que Spring Cloud Gateway levante
+            initialDelaySeconds: 15 # <-- Da un respiro de 15s para que Spring Cloud Gateway levante
             failureThreshold: 30
             periodSeconds: 5
           readinessProbe:

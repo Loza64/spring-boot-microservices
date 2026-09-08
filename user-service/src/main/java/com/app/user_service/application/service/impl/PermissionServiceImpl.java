@@ -49,7 +49,7 @@ public class PermissionServiceImpl implements PermissionService {
   }
 
   private Permission buildPermission(String name) {
-    return Permission.builder().name(name).build();
+    return Permission.builder().name(name).title(name).build();
   }
 
   @Override
@@ -69,4 +69,3 @@ public class PermissionServiceImpl implements PermissionService {
     return paginationMapper.toPaginationResponse(page.map(permissionMapper::toResponseDto));
   }
 }
-

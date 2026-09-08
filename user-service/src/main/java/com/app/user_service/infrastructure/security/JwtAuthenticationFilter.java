@@ -23,14 +23,23 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+  private static final String INTERNAL_PREFIX = "/api/internal";
+
   private final TokenService tokenService;
 
   @Override
-  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+  protected boolean shouldNotFilter(HttpServletRequest request) {
+    return request.getRequestURI().startsWith(INTERNAL_PREFIX);
+  }
+
+  @Override
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+      throws ServletException, IOException {
 
     String header = request.getHeader("Authorization");
 
-    if (header != null && header.startsWith("Bearer ")) {
+    if (SecurityContextHolder.getContext().getAuthentication() == null
+        && header != null && header.startsWith("Bearer ")) {
       String token = header.substring(7);
 
       Optional<TokenClaims> claimsOpt = tokenService.parseToken(token);
@@ -49,8 +58,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         var authentication = new UsernamePasswordAuthenticationToken(String.valueOf(claims.id()), null, authorities);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-      } else {
-        SecurityContextHolder.clearContext();
       }
     }
 

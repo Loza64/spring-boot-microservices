@@ -19,6 +19,16 @@ spring:
               predicates:
                 - Path=/api/users/**
 
+            - id: role-service-route
+              uri: ${USER_MICROSERVICE}
+              predicates:
+                - Path=/api/roles/**
+
+            - id: permission-service-route
+              uri: ${USER_MICROSERVICE}
+              predicates:
+                - Path=/api/permissions/**
+
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG

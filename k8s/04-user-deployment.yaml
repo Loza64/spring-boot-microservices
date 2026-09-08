@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: loza64/user-service:1.0.2
+          image: loza64/user-service:1.0.3
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 5002
@@ -35,7 +35,7 @@ spec:
             httpGet:
               path: /actuator/health/readiness
               port: 5002
-            initialDelaySeconds: 15   # <-- Da un respiro de 15s para que Spring Boot levante el puerto
+            initialDelaySeconds: 15 # <-- Da un respiro de 15s para que Spring Boot levante el puerto
             failureThreshold: 30
             periodSeconds: 5
           readinessProbe:
