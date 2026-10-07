@@ -12,6 +12,8 @@ public record AuthResponseDto(
         String email,
         String password,
         boolean blocked,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         LocalDateTime deletedAt,
         RoleResponseDto role) {
 }

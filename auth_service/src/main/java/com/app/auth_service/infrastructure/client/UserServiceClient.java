@@ -5,6 +5,7 @@ import com.app.auth_service.application.dto.auth.ProfileUpdateRequestDto;
 import com.app.auth_service.application.dto.auth.UserRegisterDto;
 import com.app.auth_service.application.dto.user.UserAuthDataDto;
 import com.app.auth_service.application.dto.user.UserProfileDataDto;
+import com.app.auth_service.application.port.out.UserDirectoryPort;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,7 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class UserServiceClient extends AbstractServiceClient {
+public class UserServiceClient extends AbstractServiceClient implements UserDirectoryPort {
 
     private static final String HEADER = "X-Internal-Api-Key";
     private static final String SERVICE_NAME = "user-service";
@@ -43,6 +44,7 @@ public class UserServiceClient extends AbstractServiceClient {
     }
 
     //X-Internal-Api-Key
+    @Override
     public UserAuthDataDto findByUsername(String username) {
         return execute(() -> restClient.get()
                 .uri("/api/internal/auth/by-username/{username}", username)
@@ -52,6 +54,7 @@ public class UserServiceClient extends AbstractServiceClient {
                 .body(UserAuthDataDto.class));
     }
 
+    @Override
     public UserAuthDataDto findById(Long id) {
         return execute(() -> restClient.get()
                 .uri("/api/internal/auth/by-id/{id}", id)
@@ -61,6 +64,7 @@ public class UserServiceClient extends AbstractServiceClient {
                 .body(UserAuthDataDto.class));
     }
 
+    @Override
     public UserAuthDataDto register(UserRegisterDto dto) {
         return execute(() -> restClient.post()
                 .uri("/api/internal/auth/signup")
@@ -72,6 +76,7 @@ public class UserServiceClient extends AbstractServiceClient {
     }
 
     //Bearer token
+    @Override
     public UserProfileDataDto profile(String authorizationHeader) {
         return execute(() -> restClient.get()
                 .uri("/api/auth/profile")
@@ -81,6 +86,7 @@ public class UserServiceClient extends AbstractServiceClient {
                 .body(UserProfileDataDto.class));
     }
 
+    @Override
     public UserProfileDataDto updateProfile(String authorizationHeader, ProfileUpdateRequestDto dto) {
         return execute(() -> restClient.put()
                 .uri("/api/auth/profile")
@@ -91,6 +97,7 @@ public class UserServiceClient extends AbstractServiceClient {
                 .body(UserProfileDataDto.class));
     }
 
+    @Override
     public void updatePassword(String authorizationHeader, ChangePasswordRequestDto dto) {
         execute(() -> {
             restClient.put()

@@ -20,28 +20,32 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-  private final JwtAuthenticationFilter jwtAuthenticationFilter;
-  private final InternalApiKeyFilter internalApiKeyFilter;
-  private final RestAuthenticationEntryPoint authenticationEntryPoint;
-  private final RestAccessDeniedHandler accessDeniedHandler;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final InternalApiKeyFilter internalApiKeyFilter;
+    private final RestAuthenticationEntryPoint authenticationEntryPoint;
+    private final RestAccessDeniedHandler accessDeniedHandler;
 
-  @Bean
-  SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http
-        .csrf(csrf -> csrf.disable())
-        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .exceptionHandling(eh -> eh
-            .authenticationEntryPoint(authenticationEntryPoint)
-            .accessDeniedHandler(accessDeniedHandler))
-        .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
-        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/internal/auth/by-username/**", "/api/internal/auth/by-id/**",
-                "/api/internal/auth/signup")
-            .hasAuthority("INTERNAL_SERVICE")
-            .requestMatchers("/actuator/**").permitAll()
-            .anyRequest().authenticated());
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(eh -> eh
+                        .authenticationEntryPoint(authenticationEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler)
+                )
+                .addFilterBefore(internalApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/internal/auth/by-username/**",
+                                "/api/internal/auth/by-id/**",
+                                "/api/internal/auth/signup")
+                        .hasAuthority("INTERNAL_SERVICE")
+                        .requestMatchers("/actuator/**").permitAll()
+                        .anyRequest().authenticated()
+                );
 
-    return http.build();
-  }
+        return http.build();
+    }
 }

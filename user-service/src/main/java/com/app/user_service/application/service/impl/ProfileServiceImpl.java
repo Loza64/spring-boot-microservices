@@ -4,14 +4,14 @@ import com.app.user_service.application.dto.user.UserResponseDto;
 import com.app.user_service.application.dto.user.auth.ChangePasswordDto;
 import com.app.user_service.application.dto.user.auth.UserProfileUpdateDto;
 import com.app.user_service.application.mapper.UserMapper;
+import com.app.user_service.application.port.out.UserPersistencePort;
+import com.app.user_service.application.port.out.PasswordHashingPort;
 import com.app.user_service.application.service.ProfileService;
 import com.app.user_service.domain.exception.BadRequestException;
 import com.app.user_service.domain.exception.ConflictException;
 import com.app.user_service.domain.exception.NotFoundException;
 import com.app.user_service.domain.model.User;
-import com.app.user_service.infrastructure.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,9 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ProfileServiceImpl implements ProfileService {
 
-    private final UserRepository repository;
+    private final UserPersistencePort repository;
     private final UserMapper userMapper;
-    private final PasswordEncoder encoder;
+    private final PasswordHashingPort passwordHashing;
 
     @Override
     @Transactional(readOnly = true)
@@ -51,11 +51,11 @@ public class ProfileServiceImpl implements ProfileService {
     public void updatePassword(Long id, ChangePasswordDto dto) {
         User user = repository.findById(id).orElseThrow(() -> new NotFoundException("Usuario no encontrado"));
 
-        if (!encoder.matches(dto.currentPassword(), user.getPassword())) {
+        if (!passwordHashing.matches(dto.currentPassword(), user.getPassword())) {
             throw new BadRequestException("La contraseña actual no es correcta");
         }
 
-        user.setPassword(encoder.encode(dto.newPassword()));
+        user.setPassword(passwordHashing.encode(dto.newPassword()));
         repository.save(user);
     }
 }

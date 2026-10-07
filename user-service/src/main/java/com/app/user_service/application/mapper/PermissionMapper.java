@@ -15,6 +15,11 @@ public interface PermissionMapper {
 
   PermissionResponseDto toResponseDto(Permission p);
 
+  @Mapping(target = "createdAt", ignore = true)
+  @Mapping(target = "updatedAt", ignore = true)
+  @Mapping(target = "deletedAt", ignore = true)
+  Permission toEntityResponse(PermissionResponseDto dto);
+
   @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
   @Mapping(target = "id", ignore = true)
   @Mapping(target = "name", ignore = true)

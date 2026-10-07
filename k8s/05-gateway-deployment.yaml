@@ -3,7 +3,12 @@ kind: Deployment
 metadata:
   name: gateway-service
   namespace: spring-microservices
+  labels:
+    app.kubernetes.io/name: gateway-service
+    app.kubernetes.io/part-of: spring-microservices
 spec:
+  revisionHistoryLimit: 3
+  progressDeadlineSeconds: 180
   replicas: 1
   selector:
     matchLabels:
@@ -12,37 +17,57 @@ spec:
     metadata:
       labels:
         app: gateway-service
+        app.kubernetes.io/name: gateway-service
+        app.kubernetes.io/part-of: spring-microservices
     spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: gateway-service
-          image: loza64/gateway-service:1.0.3
+          image: loza64/gateway-service:1.0.5
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 5000
+            - name: http
+              containerPort: 5000
+              protocol: TCP
           env:
             - name: SERVER_PORT
               value: "5000"
           envFrom:
             - configMapRef:
                 name: app-config
-            - secretRef:
-                name: app-secrets
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           startupProbe:
             httpGet:
               path: /actuator/health
-              port: 5000
-            initialDelaySeconds: 15 # <-- Da un respiro de 15s para que Spring Cloud Gateway levante
+              port: http
+            timeoutSeconds: 3
             failureThreshold: 30
             periodSeconds: 5
           readinessProbe:
             httpGet:
               path: /actuator/health
-              port: 5000
+              port: http
+            timeoutSeconds: 3
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /actuator/health
-              port: 5000
+              port: http
+            timeoutSeconds: 3
             periodSeconds: 15
           resources:
             requests:
@@ -51,6 +76,10 @@ spec:
             limits:
               cpu: "500m"
               memory: "768Mi"
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -63,4 +92,4 @@ spec:
     app: gateway-service
   ports:
     - port: 80
-      targetPort: 5000
+      targetPort: http

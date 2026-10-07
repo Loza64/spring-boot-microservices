@@ -14,7 +14,7 @@ WORKDIR /app
 RUN apk update && apk upgrade --no-cache
 RUN apk add --no-cache dumb-init
 
-RUN addgroup -S javaapp && adduser -S springboot -G javaapp
+RUN addgroup -S javaapp && adduser -S -u 10001 -G javaapp springboot
 
 COPY --from=build --chown=springboot:javaapp /app/target/*.jar app.jar
 

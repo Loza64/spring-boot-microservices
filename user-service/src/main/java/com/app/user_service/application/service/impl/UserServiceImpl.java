@@ -6,6 +6,9 @@ import com.app.user_service.application.dto.user.UserCreateDto;
 import com.app.user_service.application.dto.user.UserResponseDto;
 import com.app.user_service.application.dto.user.UserUpdateDto;
 import com.app.user_service.application.mapper.UserMapper;
+import com.app.user_service.application.port.out.RolePersistencePort;
+import com.app.user_service.application.port.out.PasswordHashingPort;
+import com.app.user_service.application.port.out.UserPersistencePort;
 import com.app.user_service.application.service.UserService;
 import com.app.user_service.common.pagination.PaginationMapper;
 import com.app.user_service.common.pagination.PaginationResponse;
@@ -13,13 +16,9 @@ import com.app.user_service.domain.constant.RoleNames;
 import com.app.user_service.domain.exception.ConflictException;
 import com.app.user_service.domain.exception.NotFoundException;
 import com.app.user_service.domain.model.User;
-import com.app.user_service.infrastructure.persistence.repository.RoleRepository;
-import com.app.user_service.infrastructure.persistence.repository.UserRepository;
-import com.app.user_service.infrastructure.persistence.specification.UserSpecifications;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,11 +28,11 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
 
-  private final UserRepository repository;
+  private final UserPersistencePort repository;
   private final UserMapper userMapper;
   private final PaginationMapper paginationMapper;
-  private final RoleRepository roleRepository;
-  private final PasswordEncoder encoder;
+  private final RolePersistencePort roleRepository;
+  private final PasswordHashingPort passwordHashing;
 
   private static final String SUPER_ADMIN = RoleNames.SUPER_ADMIN;
 
@@ -46,7 +45,7 @@ public class UserServiceImpl implements UserService {
     }
 
     User user = userMapper.toEntity(dto);
-    user.setPassword(encoder.encode(dto.password()));
+    user.setPassword(passwordHashing.encode(dto.password()));
 
     if (dto.role() != null && dto.role().getId() != null) {
       user.setRole(roleRepository.findById(dto.role().getId())
@@ -121,7 +120,7 @@ public class UserServiceImpl implements UserService {
   @Override
   @Transactional(readOnly = true)
   public PaginationResponse<UserResponseDto> findAll(String search, Long roleId, Boolean deleted, Pageable pageable) {
-    Page<User> page = repository.findAll(UserSpecifications.search(search, roleId, deleted), pageable);
+    Page<User> page = repository.search(search, roleId, deleted, pageable);
     return paginationMapper.toPaginationResponse(page.map(userMapper::toListResponseDto));
   }
 }

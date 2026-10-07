@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.app.user_service.application.service.seed.RoleSeedService;
+import com.app.user_service.application.port.out.PermissionPersistencePort;
+import com.app.user_service.application.port.out.RolePersistencePort;
 import com.app.user_service.domain.constant.RoleNames;
 import com.app.user_service.domain.model.Permission;
 import com.app.user_service.domain.model.Role;
-import com.app.user_service.infrastructure.persistence.repository.PermissionRepository;
-import com.app.user_service.infrastructure.persistence.repository.RoleRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,8 +25,8 @@ public class RoleSeedServiceImpl implements RoleSeedService {
   private static final Logger log = LoggerFactory.getLogger(RoleSeedServiceImpl.class);
   private static final List<String> DEFAULT_ROLES = List.of(RoleNames.ADMIN, RoleNames.CLIENT);
 
-  private final PermissionRepository permissionRepository;
-  private final RoleRepository roleRepository;
+  private final PermissionPersistencePort permissionRepository;
+  private final RolePersistencePort roleRepository;
 
   @Override
   @Transactional

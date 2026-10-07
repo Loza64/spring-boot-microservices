@@ -3,7 +3,12 @@ kind: Deployment
 metadata:
   name: user-service
   namespace: spring-microservices
+  labels:
+    app.kubernetes.io/name: user-service
+    app.kubernetes.io/part-of: spring-microservices
 spec:
+  revisionHistoryLimit: 3
+  progressDeadlineSeconds: 180
   replicas: 1
   selector:
     matchLabels:
@@ -12,18 +17,29 @@ spec:
     metadata:
       labels:
         app: user-service
+        app.kubernetes.io/name: user-service
+        app.kubernetes.io/part-of: spring-microservices
     spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        seccompProfile:
+          type: RuntimeDefault
       containers:
         - name: user-service
-          image: loza64/user-service:1.0.3
+          image: loza64/user-service:1.0.5
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 5002
+            - name: http
+              containerPort: 5002
+              protocol: TCP
           env:
             - name: SERVER_PORT
               value: "5002"
             - name: DB_URL
-              value: "jdbc:postgresql://postgres-service:5432/user_db"
+              value: "jdbc:postgresql://host.minikube.internal:5432/user_db"
           envFrom:
             - configMapRef:
                 name: app-config
@@ -31,22 +47,33 @@ spec:
                 name: app-secrets
             - secretRef:
                 name: user-service-env
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           startupProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 5002
-            initialDelaySeconds: 15 # <-- Da un respiro de 15s para que Spring Boot levante el puerto
+              port: http
+            timeoutSeconds: 3
             failureThreshold: 30
             periodSeconds: 5
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
-              port: 5002
+              port: http
+            timeoutSeconds: 3
             periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
-              port: 5002
+              port: http
+            timeoutSeconds: 3
             periodSeconds: 15
           resources:
             requests:
@@ -55,6 +82,10 @@ spec:
             limits:
               cpu: "500m"
               memory: "768Mi"
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 128Mi
 ---
 apiVersion: v1
 kind: Service
@@ -67,4 +98,4 @@ spec:
     app: user-service
   ports:
     - port: 5002
-      targetPort: 5002
+      targetPort: http

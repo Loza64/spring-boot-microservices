@@ -7,12 +7,12 @@ import java.util.stream.Collectors;
 import com.app.user_service.application.dto.permission.PermissionResponseDto;
 import com.app.user_service.application.dto.permission.PermissionUpdateDto;
 import com.app.user_service.application.mapper.PermissionMapper;
+import com.app.user_service.application.port.out.PermissionPersistencePort;
 import com.app.user_service.application.service.PermissionService;
 import com.app.user_service.common.pagination.PaginationMapper;
 import com.app.user_service.common.pagination.PaginationResponse;
 import com.app.user_service.domain.exception.NotFoundException;
 import com.app.user_service.domain.model.Permission;
-import com.app.user_service.infrastructure.persistence.repository.PermissionRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PermissionServiceImpl implements PermissionService {
 
-  private final PermissionRepository permissionRepository;
+  private final PermissionPersistencePort permissionRepository;
   private final PermissionMapper permissionMapper;
   private final PaginationMapper paginationMapper;
 

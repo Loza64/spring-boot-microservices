@@ -3,7 +3,6 @@ namespace: spring-microservices
 resources:
   - k8s/00-namespace.yaml
   - k8s/01-configmap.yaml
-  - k8s/02-postgres-deployment.yaml
   - k8s/03-auth-deployment.yaml
   - k8s/04-user-deployment.yaml
   - k8s/05-gateway-deployment.yaml

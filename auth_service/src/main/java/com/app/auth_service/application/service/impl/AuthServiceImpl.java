@@ -1,6 +1,5 @@
 package com.app.auth_service.application.service.impl;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import com.app.auth_service.application.dto.auth.AuthResponseDto;
@@ -15,12 +14,13 @@ import com.app.auth_service.application.dto.user.ProfileResponseDto;
 import com.app.auth_service.application.dto.user.UserAuthDataDto;
 import com.app.auth_service.application.dto.user.UserProfileDataDto;
 import com.app.auth_service.application.mapper.AuthMapper;
+import com.app.auth_service.application.port.out.PasswordHashingPort;
+import com.app.auth_service.application.port.out.UserDirectoryPort;
 import com.app.auth_service.application.service.AuthService;
 import com.app.auth_service.application.service.JwtService;
 import com.app.auth_service.application.service.RefreshTokenService;
 import com.app.auth_service.application.service.RefreshTokenService.RotationResult;
 import com.app.auth_service.domain.exception.UnauthorizedException;
-import com.app.auth_service.infrastructure.client.UserServiceClient;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,17 +28,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-  private final UserServiceClient userServiceClient;
-  private final PasswordEncoder passwordEncoder;
+  private final UserDirectoryPort userDirectory;
+  private final PasswordHashingPort passwordHashing;
   private final JwtService jwtService;
   private final RefreshTokenService refreshTokenService;
   private final AuthMapper authMapper;
 
   @Override
   public AuthResponseDto login(LoginRequestDto dto) {
-    UserAuthDataDto user = userServiceClient.findByUsername(dto.username());
+    UserAuthDataDto user = userDirectory.findByUsername(dto.username());
 
-    if (user == null || !passwordEncoder.matches(dto.password(), user.password())) {
+    if (user == null || !passwordHashing.matches(dto.password(), user.password())) {
       throw new UnauthorizedException("Usuario o contraseña incorrectos");
     }
 
@@ -52,7 +52,7 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public AuthResponseDto signUp(SignUpRequestDto dto) {
     UserRegisterDto registerDto = authMapper.toUserRegisterDto(dto);
-    UserAuthDataDto created = userServiceClient.register(registerDto);
+    UserAuthDataDto created = userDirectory.register(registerDto);
 
     return buildAuthResponse(created);
   }
@@ -61,7 +61,7 @@ public class AuthServiceImpl implements AuthService {
   public AuthResponseDto refresh(RefreshRequestDto dto) {
     RotationResult rotation = refreshTokenService.rotate(dto.refreshToken());
 
-    UserAuthDataDto user = userServiceClient.findById(rotation.userId());
+    UserAuthDataDto user = userDirectory.findById(rotation.userId());
 
     if (user.blocked() || user.deletedAt() != null) {
       throw new UnauthorizedException("Cuenta inactiva o bloqueada");
@@ -79,21 +79,21 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public ProfileResponseDto getProfile(String authorizationHeader) {
     requireAuthorization(authorizationHeader);
-    UserProfileDataDto user = userServiceClient.profile(authorizationHeader);
+    UserProfileDataDto user = userDirectory.profile(authorizationHeader);
     return authMapper.toProfileResponseDto(user);
   }
 
   @Override
   public ProfileResponseDto updateProfile(String authorizationHeader, ProfileUpdateRequestDto dto) {
     requireAuthorization(authorizationHeader);
-    UserProfileDataDto user = userServiceClient.updateProfile(authorizationHeader, dto);
+    UserProfileDataDto user = userDirectory.updateProfile(authorizationHeader, dto);
     return authMapper.toProfileResponseDto(user);
   }
 
   @Override
   public void changePassword(String authorizationHeader, ChangePasswordRequestDto dto) {
     requireAuthorization(authorizationHeader);
-    userServiceClient.updatePassword(authorizationHeader, dto);
+    userDirectory.updatePassword(authorizationHeader, dto);
   }
 
   private void requireAuthorization(String authorizationHeader) {

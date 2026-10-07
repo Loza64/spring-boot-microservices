@@ -1,10 +1,16 @@
 package com.app.auth_service.application.dto.user;
 
+import java.time.LocalDateTime;
+
 public record ProfileResponseDto(
         Long id,
         String username,
         String name,
         String surname,
         String email,
-        RoleResponseDto role) {
+        boolean blocked,
+        RoleResponseDto role,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        LocalDateTime deletedAt) {
 }

@@ -12,9 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.app.auth_service.application.service.RefreshTokenService;
+import com.app.auth_service.application.port.out.RefreshTokenPersistencePort;
 import com.app.auth_service.domain.exception.UnauthorizedException;
 import com.app.auth_service.domain.model.RefreshToken;
-import com.app.auth_service.infrastructure.persistence.repository.RefreshTokenRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +24,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
 
   private static final long REFRESH_TOKEN_TTL_DAYS = 7;
 
-  private final RefreshTokenRepository refreshTokenRepository;
+  private final RefreshTokenPersistencePort refreshTokenRepository;
 
   private String hash(String token) {
     try {

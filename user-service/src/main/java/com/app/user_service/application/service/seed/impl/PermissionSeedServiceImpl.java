@@ -10,9 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.app.user_service.application.service.seed.PermissionSeedService;
+import com.app.user_service.application.port.out.PermissionPersistencePort;
 import com.app.user_service.domain.constant.PermissionNames;
 import com.app.user_service.domain.model.Permission;
-import com.app.user_service.infrastructure.persistence.repository.PermissionRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,7 +34,7 @@ public class PermissionSeedServiceImpl implements PermissionSeedService {
       PermissionNames.PERMISSION_READ,
       PermissionNames.PERMISSION_UPDATE);
 
-  private final PermissionRepository permissionRepository;
+  private final PermissionPersistencePort permissionRepository;
 
   @Override
   @Transactional
@@ -47,12 +47,19 @@ public class PermissionSeedServiceImpl implements PermissionSeedService {
   private Permission seedPermission(String permissionName) {
     Permission permission = permissionRepository.findByName(permissionName)
         .orElseGet(() -> createPermission(permissionName));
+
+    if (permission.getTitle() == null || permission.getTitle().isBlank()) {
+      permission.setTitle(permissionName);
+      permission = permissionRepository.save(permission);
+    }
+
     return permission;
   }
 
   private Permission createPermission(String permissionName) {
     Permission permission = permissionRepository.save(Permission.builder()
         .name(permissionName)
+        .title(permissionName)
         .build());
     log.info("Permiso creado: {}", permissionName);
     return permission;
