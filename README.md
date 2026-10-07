@@ -139,20 +139,24 @@ El punto de entrada local es `http://localhost:5000`. También puedes acceder di
 
 ### 4.1 Preparar las imágenes
 
-Los manifiestos esperan las imágenes `loza64/auth-service:1.0.5`, `loza64/user-service:1.0.5` y `loza64/gateway-service:1.0.5`. Construye las imágenes desde la raíz del repositorio para que Minikube use el código local. Los Dockerfiles y Deployments fijan el usuario no root con UID `10001`; reconstruye las tres imágenes para que ese UID también exista dentro de ellas:
+Los manifiestos esperan las imágenes `loza64/auth-service:1.0.5`, `loza64/user-service:1.0.5` y `loza64/gateway-service:1.0.5`. En Windows, constrúyelas con Docker Desktop desde la raíz del repositorio y después cárgalas en Minikube. Los Dockerfiles y Deployments fijan el usuario no root con UID `10001`. Cada Pod solicita `500m` de CPU y puede usar hasta 2 CPU para evitar que el límite de medio núcleo estrangule el arranque de Spring Boot. Los startup probes permiten hasta cinco minutos para el inicio y el deadline de rollout está configurado en seis minutos:
 
 ```powershell
-minikube image build -t loza64/auth-service:1.0.5 -f auth_service/Dockerfile auth_service
-minikube image build -t loza64/user-service:1.0.5 -f user-service/Dockerfile user-service
-minikube image build -t loza64/gateway-service:1.0.5 -f gateway_service/Dockerfile gateway_service
+docker build -t loza64/auth-service:1.0.5 -f .\auth_service\Dockerfile .\auth_service
+docker build -t loza64/user-service:1.0.5 -f .\user-service\Dockerfile .\user-service
+docker build -t loza64/gateway-service:1.0.5 -f .\gateway_service\Dockerfile .\gateway_service
+minikube image load loza64/auth-service:1.0.5
+minikube image load loza64/user-service:1.0.5
+minikube image load loza64/gateway-service:1.0.5
 ```
 
 ### 4.2 Actualizar Kubernetes después de cambiar código
 
-Cada vez que cambies el código de un servicio, reconstruye su imagen dentro de Minikube usando el mismo tag declarado en el Deployment. Por ejemplo, si modificaste `auth_service`:
+Cada vez que cambies el código de un servicio, reconstruye su imagen con Docker y cárgala en Minikube usando el mismo tag declarado en el Deployment. Por ejemplo, si modificaste `auth_service`:
 
 ```powershell
-minikube image build -t loza64/auth-service:1.0.5 -f auth_service/Dockerfile auth_service
+docker build -t loza64/auth-service:1.0.5 -f .\auth_service\Dockerfile .\auth_service
+minikube image load loza64/auth-service:1.0.5
 kubectl apply -k .
 kubectl rollout restart deployment/auth-service -n spring-microservices
 kubectl rollout status deployment/auth-service -n spring-microservices
@@ -161,12 +165,14 @@ kubectl rollout status deployment/auth-service -n spring-microservices
 Para cambios en `user-service` o `gateway_service`, usa respectivamente estos comandos de build y reinicio:
 
 ```powershell
-minikube image build -t loza64/user-service:1.0.5 -f user-service/Dockerfile user-service
+docker build -t loza64/user-service:1.0.5 -f .\user-service\Dockerfile .\user-service
+minikube image load loza64/user-service:1.0.5
 kubectl rollout restart deployment/user-service -n spring-microservices
 ```
 
 ```powershell
-minikube image build -t loza64/gateway-service:1.0.5 -f gateway_service/Dockerfile gateway_service
+docker build -t loza64/gateway-service:1.0.5 -f .\gateway_service\Dockerfile .\gateway_service
+minikube image load loza64/gateway-service:1.0.5
 kubectl rollout restart deployment/gateway-service -n spring-microservices
 ```
 
@@ -177,7 +183,7 @@ kubectl rollout status deployment/user-service -n spring-microservices
 kubectl rollout status deployment/gateway-service -n spring-microservices
 ```
 
-Si modificaste manifiestos, `.env` o ConfigMaps/Secrets, aplica los cambios con `kubectl apply -k .`. Para que Kubernetes descargue inequívocamente una nueva imagen, usa un tag nuevo y actualiza el campo `image` en el Deployment correspondiente; `imagePullPolicy: IfNotPresent` puede reutilizar una imagen local que ya tenga el mismo tag. Al cambiar el tag del manifiesto, `kubectl apply -k .` inicia el rollout y no hace falta ejecutar `rollout restart` manualmente.
+Si modificaste manifiestos, `.env` o ConfigMaps/Secrets, aplica los cambios con `kubectl apply -k .`. Para que Kubernetes descargue inequívocamente una nueva imagen, usa un tag nuevo y actualiza el campo `image` en el Deployment correspondiente; `imagePullPolicy: IfNotPresent` puede reutilizar una imagen local que ya tenga el mismo tag. Al cambiar el tag del manifiesto, `kubectl apply -k .` inicia el rollout y no hace falta ejecutar `rollout restart` manualmente. En Windows, si `minikube image build` falla al resolver el contexto del Dockerfile, usa `docker build` seguido de `minikube image load`, como en los ejemplos anteriores.
 
 ### 4.3 Comprobar PostgreSQL desde Minikube
 
@@ -329,6 +335,7 @@ Los endpoints `/api/internal/auth/**` pertenecen a `user-service`: son para comu
 ## Diagnóstico y resolución de problemas
 
 - **Pods en `CreateContainerConfigError` con `runAsNonRoot` o usuario no numérico:** reconstruye las imágenes con los Dockerfiles del repositorio (que crean `springboot` con UID `10001`) y vuelve a aplicar/reiniciar los Deployments.
+- **Startup probe falla mientras Spring Boot inicializa:** revisa los logs antes de concluir que la aplicación falló. Los manifiestos permiten hasta cinco minutos para el startup; después verifica que el contenedor no esté reiniciándose y que la conexión a PostgreSQL haya finalizado correctamente.
 - **Pods en `CrashLoopBackOff`:** consulta `kubectl logs` y confirma que `.env` contiene todas las claves obligatorias.
 - **Error de conexión a PostgreSQL:** verifica que el contenedor está activo, que escucha en `5432`, que existen `auth_db` y `user_db`, que el password coincide y que el host Minikube resuelve `host.minikube.internal`. No borres la base para corregirlo.
 - **El gateway no conecta a auth/user:** comprueba `app-config`, los Services internos y `kubectl get endpoints -n spring-microservices`.

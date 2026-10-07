@@ -8,7 +8,7 @@ metadata:
     app.kubernetes.io/part-of: spring-microservices
 spec:
   revisionHistoryLimit: 3
-  progressDeadlineSeconds: 180
+  progressDeadlineSeconds: 360
   replicas: 1
   selector:
     matchLabels:
@@ -55,7 +55,7 @@ spec:
               path: /actuator/health
               port: http
             timeoutSeconds: 3
-            failureThreshold: 30
+            failureThreshold: 60
             periodSeconds: 5
           readinessProbe:
             httpGet:
@@ -71,10 +71,10 @@ spec:
             periodSeconds: 15
           resources:
             requests:
-              cpu: "150m"
+              cpu: "500m"
               memory: "384Mi"
             limits:
-              cpu: "500m"
+              cpu: "2"
               memory: "768Mi"
       volumes:
         - name: tmp
